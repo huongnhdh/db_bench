@@ -3,7 +3,7 @@ import psycopg2
 
 def main():
     # Define our connection string
-    conn_string = "host='localhost' dbname='benchmark' user='postgres'"
+    conn_string = "host='localhost' dbname='benchmark' user='postgres' password='password'"
 
     # Print the connection string we will use to connect
     print(("Connecting to database\n ->%s" % (conn_string)))

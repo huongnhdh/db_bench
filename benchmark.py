@@ -1,7 +1,11 @@
-import time
-current_milli_time = lambda: time.time() * 1000
-import MySQLdb
 import psycopg2
+import MySQLdb
+import time
+import logging
+logger = logging.getLogger(__name__)
+
+
+def current_milli_time(): return time.time() * 1000
 
 
 class Benchmark:
@@ -35,13 +39,16 @@ class Benchmark:
         self.host = arr_dict['host']
         self.user = arr_dict['user']
         self.passwd = arr_dict['passwd']
+        self.port = arr_dict['port']
         self.db = 'benchmark'
         self.write_dir = 'benchmark'
 
     def init(self):
         if self.pre == 'pg':
             self.pg_init()
-        else:
+        elif self.pre == 'my':
+            self.my_init()
+        elif self.pre == 'ma':
             self.my_init()
 
     def my_init(self):
@@ -53,9 +60,19 @@ class Benchmark:
         r.close()
         print("mysql benchmark table + DB init successfully")
 
+    def ma_init(self):
+        mc = self._connect()
+        r = mc.cursor()
+        with open(self.db_initfile, 'r') as myfile:
+            data = myfile.read().replace('\n', ' ')
+        r.execute(data)
+        r.close()
+        print("MariaBB benchmark table + DB init successfully")
+
     def pg_init(self):
         pc = self._connect()
-        pc.set_isolation_level(0)  # PostgreSQL can not drop databases within a transaction,
+        # PostgreSQL can not drop databases within a transaction,
+        pc.set_isolation_level(0)
         r = pc.cursor()
         with open(self.db_initfile, 'r') as myfile:
             query = myfile.read().replace('\n', ' ')
@@ -102,7 +119,8 @@ class Benchmark:
 
     def _query(self, query, filename):
         iter = 100
-        wf = open(self.write_dir + '/' + self.pre + '_' + filename + '.txt', 'wb')
+        wf = open(self.write_dir + '/' + self.pre +
+                  '_' + filename + '.txt', 'wb')
         for x in range(0, iter):
             conn = self._connect_db()
             r = conn.cursor()
@@ -116,15 +134,14 @@ class Benchmark:
         wf.close()
 
     def config(self):
-        wf = open(self.write_dir + '/' + self.pre + '_config.txt', 'wb')
-        conn = self._connect_db()
-        r = conn.cursor()
-        r.execute(self.query['config'])
-        for row in r:
-            wf.write(str(row[0]) + ': ' + str(row[1]) + '\n')
-        r.close()
-        conn.close()
-        wf.close()
+        with open(self.write_dir + '/' + self.pre + '_config.txt', 'wb') as wf:
+            conn = self._connect_db()
+            r = conn.cursor()
+            r.execute(self.query['config'])
+            for row in r:
+                wf.write(str(row[0]) + ': ' + str(row[1]) + '\n')
+            r.close()
+            conn.close()
 
     def summary(self):
         wf = open(self.write_dir + '/' + self.pre + '_summary.txt', 'wb')
@@ -137,7 +154,10 @@ class Benchmark:
                 total_line = total_line + 1
                 total_time = total_time + float(line)
         avg_time = total_time / total_line
-        wf.write('average write time: ' + str(avg_time) + self.time_unit + '/10000rows\n')
+        wf.write('avg_write_time(ms/10000rows):{}\n'.format(
+            str(avg_time) + self.time_unit))
+        print('avg_write_time(ms/10000rows):{}'.format(
+            str(avg_time) + self.time_unit))
         f.close()
 
         for key in self.read_query:
@@ -148,34 +168,55 @@ class Benchmark:
                 line = line.strip()
                 if line != '':
                     total_line = total_line + 1
-
+                    total_time = total_time + float(line)
+            avg_time = total_time/total_line
+            wf.write('avg_query_{}_time(ms):{}\n'.format(key, str(avg_time)))
+            print('avg_query_{}_time(ms):{}\n'.format(key, str(avg_time)))
         wf.close()
 
     def _connect(self):
         if self.pre == 'pg':
-            return psycopg2.connect(host=self.host, user=self.user, password=self.passwd)
+            return psycopg2.connect(host=self.host, user=self.user, password=self.passwd, port=self.port)
         else:
-            return MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd)
+            return MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd, port=self.port)
 
     def _connect_db(self):
         if self.pre == 'pg':
-            return psycopg2.connect(host=self.host, user=self.user, password=self.passwd)
+            return psycopg2.connect(host=self.host, user=self.user, password=self.passwd, port=self.port)
         else:
-            return MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd, db=self.db)
+            return MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd, db=self.db, port=self.port)
 
-dict_connection = {
-    'host': 'uvm',
-    'user': 'root',
-    'passwd': 'root'
-}
-benchmark_db = 'mysql'
-if benchmark_db == 'postgres':
-    dict_connection['user'] = 'postgres'
-    dict_connection['passwd'] = 'postgres'
 
-benchmark = Benchmark(benchmark_db, dict_connection)
-# benchmark.init() # comment benchmark.init() to disable initialize database + table
-benchmark.config()
-benchmark.write()
-benchmark.read()
-benchmark.summary()
+if __name__ == "__main__":
+    for database in ['mysql', 'postgres', 'mariadb']:
+        logger.info("started benchmark for {}".format(database))
+        print("started benchmark for {}".format(database))
+        benchmark_db = database
+        if benchmark_db == 'postgres':
+            dict_connection = {
+                'host': '127.0.0.1',
+                'user': 'postgres',
+                'passwd': 'password',
+                'port': 5433
+            }
+        elif benchmark_db == 'mysql':
+            dict_connection = {
+                'host': '127.0.0.1',
+                'user': 'root',
+                'passwd': 'password',
+                'port': 3302
+            }
+        elif benchmark_db == 'mariadb':
+            dict_connection = {
+                'host': '127.0.0.1',
+                'user': 'root',
+                'passwd': 'password',
+                'port': 3307
+            }
+
+        benchmark = Benchmark(benchmark_db, dict_connection)
+        # benchmark.init() # comment benchmark.init() to disable initialize database + table
+        benchmark.config()
+        benchmark.write()
+        benchmark.read()
+        benchmark.summary()
