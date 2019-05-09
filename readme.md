@@ -31,9 +31,8 @@ q4: SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345
 q5: SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000
 q6: SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000
 ```
-*Ref:*
-- https://stackshare.io/stackups/mariadb-vs-mysql-vs-postgresql
-- The raw of result at https://github.com/huongnhdh/db_bench/tree/master/benchmark
+The raw of result at https://github.com/huongnhdh/db_bench/tree/master/benchmark
+
 ## 3. Conclusion.
 - avg write time (batch insert): MariaDB win
 - `select` with `limit`: same
