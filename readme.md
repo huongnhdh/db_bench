@@ -1,5 +1,7 @@
 # Compare Database: MySQL, PostgreSQL, Maria DB (MongoDB with do later)
 ## 1.How to metric
+### Step 1: prepare environment for test: see at [docker](https://github.com/huongnhdh/db_bench/blob/master/docker.txt)
+
 | Database management system                                      | version | env |
 | ---------------------------------------------- | ------ | --- |
 | [Mysql](https://github.com/mysql/mysql-server) |      8.0  | [mysql image](https://hub.docker.com/_/mysql)    |
@@ -7,7 +9,13 @@
 | [PostgreSQL](https://github.com/postgres/postgres)|     11.2  | [Postgres image](https://hub.docker.com/_/postgres)     |
 | ~~[MongoDB](https://github.com/mongodb/mongo)~~|        |     |
 
+### Step 2: Prepare DataSet see data set
+  A table test with 10000 row is random text(latin)
+  see https://github.com/huongnhdh/db_bench/blob/master/sql/insert.sql
 
+### Step 3: Run some query for measure time:
+  please see https://github.com/huongnhdh/db_bench/blob/master/benchmark.py
+  and report image below
 
 ## 2. The report for basic syntax
 
