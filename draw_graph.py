@@ -54,21 +54,12 @@ plt.bar(index + bar_width*2, mysql, bar_width,
         color='r',
         label='Mysql-8.0')
 
-plt.xlabel('Time')
-plt.ylabel('Query')
+plt.xlabel('Query')
+plt.ylabel('Time(ms)')
 plt.title('Compatible Mysql, PostpreSQL, MariaDB')
 
-
-# 'q1: SELECT * FROM testing LIMIT 1000',
-# "q2:SELECT * FROM testing WHERE int_col > 5000 LIMIT 1000",
-# 'q3:SELECT * FROM testing WHERE int_col + int_col2 > 12345 LIMIT 1000',
-# "q4:SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345",
-# "q5:SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000",
-#"q6:SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000"
-
-
 plt.xticks(
-    index + bar_width, ('avg_write_time/10000rows',
+    index + bar_width, ('avg_write',
                         'q1',
                         "q2",
                         'q3',
@@ -77,6 +68,6 @@ plt.xticks(
                         "q6"
                         ))
 plt.legend()
-
 plt.tight_layout()
+plt.savefig('benchmark.png')
 plt.show()
