@@ -25,7 +25,7 @@ q6: SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIM
 ```
 *Ref:*
 - https://stackshare.io/stackups/mariadb-vs-mysql-vs-postgresql
-- The raw of result in
+- The raw of result at https://github.com/huongnhdh/db_bench/tree/master/benchmark
 ## 3. Conclusion.
 - avg write time (batch insert): MariaDB win
 - `select` with `limit`: same
