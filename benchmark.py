@@ -191,7 +191,7 @@ class Benchmark:
             _write_file_report = os.path.join(
                 self.write_dir,  self.dbms.value + '_write.txt')
             with open(_write_file_report, 'wb') as wf:
-                for x in range(0, iter):
+                for _ in range(0, iter):
                     conn = self._connect_db()
                     r = conn.cursor()
                     t1 = current_mills_time()
@@ -217,65 +217,75 @@ class Benchmark:
         out_put_file = os.path.join(
             self.write_dir,  self.dbms.value + '_' + filename + '.txt')
         with open(out_put_file, 'wb') as wf:
-          for _ in range(0, iter):
-            conn = self._connect_db()
-            coll = conn.testing
-            t1 = current_mills_time()
-            coll.execute(query)
-            t2 = current_mills_time()
-            time_used = t2 - t1
-            wf.write(str(time_used) + '\n')
+            for _ in range(0, iter):
+                conn = self._connect_db()
+                coll = conn.testing
+                t1 = current_mills_time()
+                coll.execute(query)
+                t2 = current_mills_time()
+                time_used = t2 - t1
+                wf.write(str(time_used) + '\n')
 
     def _query_mongodb(self, query_key, filename):
         iter = 100
         out_put_file = os.path.join(
             self.write_dir,  self.dbms.value + '_' + filename + '.txt')
         with open(out_put_file, 'wb') as wf:
-          for x in range(0, iter):
-            conn = self._connect_db()
-            coll = conn.testing
-            if query_key == 'q1':
-                t1 = current_mills_time()
-                coll.find().limit(1000)
-                t2 = current_mills_time()
-                time_used = t2 - t1
-                wf.write(str(time_used) + '\n')
-            if query_key == 'q2':
-                t1 = current_mills_time()
-                #  "SELECT * FROM testing WHERE int_col > 5000 LIMIT 1000",
-                coll.find({'int_col': {"$gt": 5000} }).limit(1000)
-                t2 = current_mills_time()
-                time_used = t2 - t1
-                wf.write(str(time_used) + '\n')
-            if query_key == 'q3':
-                t1 = current_mills_time()
-                # "q3": "SELECT * FROM testing WHERE int_col + int_col2 > 12345 LIMIT 1000",
-                # coll.find({ $where: "/^.*test.*$/.test(this.int_col + this.int_col2)" } )).limit(1000)
-                coll.find({'int_col': {"$gt": 12345} }).limit(1000)
-                t2 = current_mills_time()
-                time_used = t2 - t1
-                wf.write(str(time_used) + '\n')
-            if query_key == 'q4':
-                # "q4": "SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345",
-                t1 = current_mills_time()
-                coll.find({'int_col': {"$gt": 5000}} ).limit(1000)
-                t2 = current_mills_time()
-                time_used = t2 - t1
-                wf.write(str(time_used) + '\n')
-            if query_key == 'q5':
-                # "q5": "SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000",
-                t1 = current_mills_time()
-                coll.find({'int_col': {"$gt": bson.int64.Int64(5000)}}).sort([("word_col", pymongo.ASCENDING)]).limit(1000)
-                t2 = current_mills_time()
-                time_used = t2 - t1
-                wf.write(str(time_used) + '\n')
-            if query_key == 'q6':
-                # "q6": "SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000"
-                t1 = current_mills_time()
-                coll.find({"word_col":{"$regex": u"lim"}}).sort([("word_col", pymongo.ASCENDING)]).limit(1000)
-                t2 = current_mills_time()
-                time_used = t2 - t1
-                wf.write(str(time_used) + '\n')
+            for _ in range(0, iter):
+                conn = self._connect_db()
+                coll = conn.testing
+                if query_key == 'q1':
+                    t1 = current_mills_time()
+                    coll.find().limit(1000)
+                    t2 = current_mills_time()
+                    time_used = t2 - t1
+                    wf.write(str(time_used) + '\n')
+                if query_key == 'q2':
+                    t1 = current_mills_time()
+                    #  "SELECT * FROM testing WHERE int_col > 5000 LIMIT 1000",
+                    coll.find({'int_col': {"$gt": 5000}}).limit(1000)
+                    t2 = current_mills_time()
+                    time_used = t2 - t1
+                    wf.write(str(time_used) + '\n')
+                if query_key == 'q3':
+                    t1 = current_mills_time()
+                    # "q3": "SELECT * FROM testing WHERE int_col + int_col2 > 12345 LIMIT 1000",
+                    # coll.find({ $where: "/^.*test.*$/.test(this.int_col + this.int_col2)" } )).limit(1000)
+                    coll.aggregate([
+                        {
+                            "$addFields": {
+                                "total_int": {"$add": ["$col_int", "$col_int2"]}
+                            }
+                        },
+                        {
+                    ]).find({'total_int': {"$gt": 12345}}).limit(1000)
+                    t2 = current_mills_time()
+                    time_used = t2 - t1
+                    wf.write(str(time_used) + '\n')
+                if query_key == 'q4':
+                    # "q4": "SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345",
+                    t1 = current_mills_time()
+                    coll.find({'int_col': {"$gt": 5000}}).limit(1000)
+                    t2 = current_mills_time()
+                    time_used = t2 - t1
+                    wf.write(str(time_used) + '\n')
+                if query_key == 'q5':
+                    # "q5": "SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000",
+                    t1 = current_mills_time()
+                    coll.find({'int_col': {"$gt": bson.int64.Int64(5000)}}).sort(
+                        [("word_col", pymongo.ASCENDING)]).limit(1000)
+                    t2 = current_mills_time()
+                    time_used = t2 - t1
+                    wf.write(str(time_used) + '\n')
+                if query_key == 'q6':
+                    # "q6": "SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000"
+                    t1 = current_mills_time()
+                    coll.find({"word_col": {"$regex": u"lim"}}).sort(
+                        [("word_col", pymongo.ASCENDING)]).limit(1000)
+                    t2 = current_mills_time()
+                    time_used = t2 - t1
+                    wf.write(str(time_used) + '\n')
+
     def config(self):
         config_file_locate = os.path.join(
             self.write_dir, self.dbms.value + '_config.txt')
@@ -294,20 +304,25 @@ class Benchmark:
             # TODO: need to imp different way for mongo-db
 
     def summary(self):
-        summary_file = os.path.join(self.write_dir, self.dbms.value + '_summary.txt')
-        report_write_file = os.path.join(self.write_dir, self.dbms.value + '_write.txt')
-        with open( summary_file, 'wb') as wf:
+        summary_file = os.path.join(
+            self.write_dir, self.dbms.value + '_summary.txt')
+        report_write_file = os.path.join(
+            self.write_dir, self.dbms.value + '_write.txt')
+        with open(summary_file, 'wb') as wf:
             with open(report_write_file, 'r') as f:
-                lines = [float(l)  for l in f.readlines()  if l.strip() != '']
+                lines = [float(l) for l in f.readlines() if l.strip() != '']
                 avg_time = sum(lines) / len(lines)
                 wf.write('avg_write_time(ms/10000rows):{}\n'.format(str(avg_time)))
                 print('avg_write_time(ms/10000rows):{}'.format(str(avg_time)))
             for key in self.read_query:
-                report_query_file = os.path.join(self.write_dir, self.dbms.value + '_' + key + '.txt')
+                report_query_file = os.path.join(
+                    self.write_dir, self.dbms.value + '_' + key + '.txt')
                 with open(report_query_file, 'r') as f:
-                    lines = [float(l) for l in f.readlines() if l.strip() != '']
+                    lines = [float(l)
+                             for l in f.readlines() if l.strip() != '']
                     avg_time = sum(lines) / len(lines)
-                    wf.write('avg_query_{}_time(ms):{}\n'.format(key, str(avg_time)))
+                    wf.write('avg_query_{}_time(ms):{}\n'.format(
+                        key, str(avg_time)))
                     print('avg_query_{}_time(ms):{}\n'.format(key, str(avg_time)))
 
     def _connect(self):
