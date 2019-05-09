@@ -33,6 +33,5 @@ q6: SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIM
 - `select` with `where(>)` and `limit`: same
 - `select` with `count`, `where( <, + )`: PostgreSQL win
 - `select` with `where(>, +)` `order by` and `asc` and `limit`: PostgreSQL win
-- `select` with `where(>, +)` `order by` and `asc` and `limit`: PostgreSQL win
 - `select` with `where(> )` `order by` and `asc` and `limit`: PostgreSQL win
 - `select` with `where(like)` `order by` and `asc` and `limit`: PostgreSQL win
