@@ -1,0 +1,7 @@
+avg_write_time(ms/10000rows):123.453588867
+avg_query_q1_time(ms):0.0327587890625
+avg_query_q3_time(ms):0.037119140625
+avg_query_q2_time(ms):0.03341796875
+avg_query_q5_time(ms):0.0368237304688
+avg_query_q4_time(ms):0.0417333984375
+avg_query_q6_time(ms):0.0441259765625
