@@ -2,7 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # data to plot
-reports_summary = ['ma_summary.txt', 'my_summary.txt', 'pg_summary.txt']
+class ReportFile(Enum):
+    MARIA_DB = 'mariadb_sumary.txt'
+    MYSQL = 'mysql_sumary.txt'
+    POSTPRESQL = 'postgresql_summary.txt'
+    MONGO_DB = 'mongo_summary.txt'
+
+reports_summary = ['mariadb_sumary.txt', 'mysql_sumary.txt', 'pg_summary.txt']
 for report_file in reports_summary:
     with open('./benchmark/' + report_file, 'r') as rf:
         lines = rf.readlines()
@@ -56,7 +62,7 @@ plt.bar(index + bar_width*2, mysql, bar_width,
 
 plt.xlabel('Query')
 plt.ylabel('Time(ms)')
-plt.title('Compatible Mysql, PostpreSQL, MariaDB')
+plt.title('Compatible Mysql, PostpreSQL, MariaDB', 'MongoDB')
 
 plt.xticks(
     index + bar_width, ('avg_write',
@@ -69,5 +75,5 @@ plt.xticks(
                         ))
 plt.legend()
 plt.tight_layout()
-plt.savefig('benchmark.png')
+plt.savefig('benchmark_mongo_maria_my_post_gre.png')
 plt.show()

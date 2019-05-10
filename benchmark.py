@@ -8,13 +8,13 @@ import pymongo
 
 import psycopg2
 import MySQLdb
-from pymongo import MongoClient
+from pymongo import MongoClient, InsertOne
 
 from bson import json_util
 from enum import Enum
 
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class DBMS(Enum):
@@ -70,9 +70,7 @@ class Benchmark:
             "q5": "SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000",
             "q6": "SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000"
         }
-        # self.read_query_nosql = {
-        #     "q1": "{}",
-        # }
+        self.query = {}
         self.db_mode = STORE_TYPE.SQL  # include sql and no-sql
         if self.dbms == DBMS.POSTGRESQL:
             self.db_initfile = 'postgres.sql'
@@ -92,59 +90,59 @@ class Benchmark:
         self.passwd = arr_dict.get('passwd', None)
         self.port = arr_dict.get('port', None)
         self.db = db
-        self.init()
+        # self.init()
 
-    def init(self):
-        if self.dbms == DBMS.POSTGRESQL:
-            self.pg_init()
-        elif self.dbms == DBMS.MYSQL:
-            self.my_init()
-        elif self.dbms == DBMS.MARIADB:
-            self.my_init()
-        elif self.dbms == DBMS.MONGODB:
-            self.mo_init()
+    # def init(self):
+    #     if self.dbms == DBMS.POSTGRESQL:
+    #         self.pg_init()
+    #     elif self.dbms == DBMS.MYSQL:
+    #         self.my_init()
+    #     elif self.dbms == DBMS.MARIADB:
+    #         self.my_init()
+    #     elif self.dbms == DBMS.MONGODB:
+    #         self.mo_init()
 
-    def my_init(self):
-        mc = self._connect()
-        r = mc.cursor()
-        with open(self.db_initfile, 'r') as myfile:
-            data = myfile.read().replace('\n', ' ')
-        r.execute(data)
-        r.close()
-        print("mysql benchmark table + DB init successfully")
+    # def my_init(self):
+    #     mc = self._connect()
+    #     r = mc.cursor()
+    #     with open(self.db_initfile, 'r') as myfile:
+    #         data = myfile.read().replace('\n', ' ')
+    #     r.execute(data)
+    #     r.close()
+    #     print("mysql benchmark table + DB init successfully")
 
-    def mo_init(self):
-        client = self._connect()
-        db = client['benchmark']  # create database
-        db.testing  # create collation
-        print("mongodb benchmark DB:{},collection:{} init successfully".format(
-            'benchmark', 'testing'))
+    # def mo_init(self):
+    #     client = self._connect()
+    #     db = client['benchmark']  # create database
+    #     db.testing  # create collation
+    #     print("mongodb benchmark DB:{},collection:{} init successfully".format(
+    #         'benchmark', 'testing'))
 
-    def ma_init(self):
-        mc = self._connect()
-        r = mc.cursor()
-        with open(self.db_initfile, 'r') as myfile:
-            data = myfile.read().replace('\n', ' ')
-        r.execute(data)
-        r.close()
-        print("MariaBB benchmark table + DB init successfully")
+    # def ma_init(self):
+    #     mc = self._connect()
+    #     r = mc.cursor()
+    #     with open(self.db_initfile, 'r') as myfile:
+    #         data = myfile.read().replace('\n', ' ')
+    #     r.execute(data)
+    #     r.close()
+    #     print("MariaBB benchmark table + DB init successfully")
 
-    def pg_init(self):
-        pc = self._connect()
-        # PostgreSQL can not drop databases within a transaction,
-        pc.set_isolation_level(0)
-        r = pc.cursor()
-        with open(self.db_initfile, 'r') as myfile:
-            query = myfile.read().replace('\n', ' ')
-        query = query.split(';')  # postgres create database is strict
-        r.execute(query[0] + ';')
-        r.close()
-        pc = self._connect_db()
-        r = pc.cursor()
-        r.execute(query[1] + ';')
-        r.close()
-        pc.commit()
-        print("postgres benchmark table + DB successfully")
+    # def pg_init(self):
+    #     pc = self._connect()
+    #     # PostgreSQL can not drop databases within a transaction,
+    #     pc.set_isolation_level(0)
+    #     r = pc.cursor()
+    #     with open(self.db_initfile, 'r') as myfile:
+    #         query = myfile.read().replace('\n', ' ')
+    #     query = query.split(';')  # postgres create database is strict
+    #     r.execute(query[0] + ';')
+    #     r.close()
+    #     pc = self._connect_db()
+    #     r = pc.cursor()
+    #     r.execute(query[1] + ';')
+    #     r.close()
+    #     pc.commit()
+    #     print("postgres benchmark table + DB successfully")
 
     def truncate(self):
         if self.db_mode == STORE_TYPE.SQL:
@@ -156,7 +154,6 @@ class Benchmark:
             conn.close()
         else:
             db = self._connect_db()
-            print(db['testing'].drop())
 
     def write(self):
         self.truncate()
@@ -172,14 +169,16 @@ class Benchmark:
             iter = 100
             _write_file_report = os.path.join(
                 self.write_dir,  self.dbms.value + '_write.txt')
+            data = [InsertOne(d)  for d in data]
             with open(_write_file_report, 'wb') as wf:
-                for x in range(0, iter):
-                    self.truncate()
+                for _ in range(0, iter):
                     conn = self._connect_db()
                     coll = conn.testing
-                    print(coll.count())
+                    bulk = coll.bulk_write(data, bypass_document_validation=False)
+                    # bulk.bulkWrite(data)
+                    # bulk.execute()
                     t1 = current_mills_time()
-                    print(coll.insert_many(data))
+                    # coll.bulkWrite(data)
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
@@ -219,12 +218,14 @@ class Benchmark:
         with open(out_put_file, 'wb') as wf:
             for _ in range(0, iter):
                 conn = self._connect_db()
-                coll = conn.testing
+                r = conn.cursor()
                 t1 = current_mills_time()
-                coll.execute(query)
+                r.execute(query)
                 t2 = current_mills_time()
                 time_used = t2 - t1
                 wf.write(str(time_used) + '\n')
+                r.close()
+                conn.close()
 
     def _query_mongodb(self, query_key, filename):
         iter = 100
@@ -251,21 +252,14 @@ class Benchmark:
                     t1 = current_mills_time()
                     # "q3": "SELECT * FROM testing WHERE int_col + int_col2 > 12345 LIMIT 1000",
                     # coll.find({ $where: "/^.*test.*$/.test(this.int_col + this.int_col2)" } )).limit(1000)
-                    coll.aggregate([
-                        {
-                            "$addFields": {
-                                "total_int": {"$add": ["$col_int", "$col_int2"]}
-                            }
-                        },
-                        {
-                    ]).find({'total_int': {"$gt": 12345}}).limit(1000)
+                    coll.find({ "$where": "this.int_col + this.int_col2  > 12345" } ).limit(1000)
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
                 if query_key == 'q4':
                     # "q4": "SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345",
                     t1 = current_mills_time()
-                    coll.find({'int_col': {"$gt": 5000}}).limit(1000)
+                    coll.find({ "$where": "this.int_col + this.int_col2  > 12345" }).count()
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
@@ -280,8 +274,10 @@ class Benchmark:
                 if query_key == 'q6':
                     # "q6": "SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000"
                     t1 = current_mills_time()
-                    coll.find({"word_col": {"$regex": u"lim"}}).sort(
-                        [("word_col", pymongo.ASCENDING)]).limit(1000)
+                    # coll.find({"word_col": {"$regex": u"lim"}}).sort(
+                    #     [("word_col", pymongo.ASCENDING)]).limit(1000)
+                    coll.find({"word_col":  "/.*lim.*/"}).sort(
+                        [("word_col", pymongo.DESCENDING)]).limit(1000)
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
@@ -348,21 +344,23 @@ class Benchmark:
 
 
 def _benchmark(database):
-    logger.info("started benchmark for {}".format(database))
+    # logger.info("started benchmark for {}".format(database))
     print("started benchmark for {}".format(database))
     benchmark_db = database
     dict_connection = CONNECTION_INIT[database.value]
     benchmark = Benchmark(benchmark_db, dict_connection)
     # benchmark.config()
-    # benchmark.write()
+    benchmark.write()
     benchmark.read()
-    # benchmark.summary()
+    benchmark.summary()
 
 
 if __name__ == "__main__":
     _benchmark(DBMS.MONGODB)
-    # for database in ['mysql', 'postgres', 'mariadb', 'mongo']:
-    #     try:
-    #         _benchmark(database)
-    #     except Exception as e:
-    #         logger.error("Has error {}".format(e.message) )
+    # for database in DBMS:
+    #     _benchmark(database)
+        # try:
+
+        # except Exception as e:
+        #     print("Has error {}".format(e.message))
+        #     # logger.error(  )
