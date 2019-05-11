@@ -38,7 +38,7 @@ The raw of result at https://github.com/huongnhdh/db_bench/tree/master/benchmark
 - `select` with `limit`: same
 - `select` with `where` and `limit`: same
 - `select` with `where(>)` and `limit`: same
-- `select` with `count`, `where( <, + )`: PostgreSQL win
+- `select` with `count`, `where( >, + )`: PostgreSQL win
 - `select` with `where(>, +)` `order by` and `asc` and `limit`: PostgreSQL win
 - `select` with `where(> )` `order by` and `asc` and `limit`: PostgreSQL win
 - `select` with `where(like)` `order by` and `asc` and `limit`: PostgreSQL win
