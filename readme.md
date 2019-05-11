@@ -10,7 +10,7 @@
 | ~~[MongoDB](https://github.com/mongodb/mongo)~~|        |     |
 
 ### Step 2: Prepare DataSet see data set
-  A table test with 10000 row is random text(latin)
+  A table test with 1.000.000 rows are random text(latin)
   see https://github.com/huongnhdh/db_bench/blob/master/sql/insert.sql
 
 ### Step 3: Run some query for measure time:
