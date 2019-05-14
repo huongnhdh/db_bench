@@ -24,13 +24,11 @@ The ENV of running script is: Python 2.7 with Ubuntu 18.10 (SSD 128G)
   - For write: running 100 times for bulk insert each time are 10.000 rows
 
   | Query Type  | query 1 (q1)  | query 2 (q2)  | query 3 (q3)  | query 4(q4) |query 5 (q5) |query 6(q6)|
-  |---|---|---|---|---|---|---|---|
+  |---|---|---|---|---|---|---|  
   | SQL  | `SELECT * FROM testing LIMIT 1000`  |`SELECT * FROM testing WHERE int_col > 5000 LIMIT 1000`   |`SELECT * FROM testing WHERE int_col + int_col2 > 12345 LIMIT 1000`   |`SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345`   |`SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000`|`SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000`|
   | MongoDB(NoSQL)  | `find().limit(1000) ` | `find({'int_col': {"$gt": 5000}}).limit(1000)`  |`aggregate.([{"$addFields":{"sum":{"$sum":["$int_col","$int_col2"]}}},{"$match":{"sum":{"$gt":12345}}},{"$limit": 1000}])`| `aggregate.([{"$addFields":{"sum":{"$sum":["$int_col","$int_col2"]}}},{"$match":{"sum":{"$gt":12345}}},{"$count": "totalCount"}])` |`find({'int_col': {"$gt": bson.int64.Int64(5000)}}).sort([("word_col", pymongo.ASCENDING)]).limit(1000)`|`.find({"word_col":  "/.*lim.*/"}).sort([("word_col", pymongo.DESCENDING)]).limit(1000)`|
 
-  - report image below
-
-## 2. The report for basic query
+## 2. The report
 
 ![report_mysql_postgresql_mariadb_mongo_db.png](report_mysql_postgresql_mariadb_mongo_db.png)
 
