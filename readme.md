@@ -1,6 +1,8 @@
 # Compare Database: MySQL, PostgreSQL, Maria DB (MongoDB with do later)
 ## 1.How to metric
-### Step 1: prepare environment for test: see at [docker](https://github.com/huongnhdh/db_bench/blob/master/docker.txt)
+### Step 1: Environment for test: 
+
+see at [docker](https://github.com/huongnhdh/db_bench/blob/master/docker.txt)
 
 | Database management system                                      | version | env |
 | ---------------------------------------------- | ------ | --- |
@@ -11,15 +13,16 @@
 
 The ENV of running script is: Python 2.7 with Ubuntu 18.10 (SSD 128G)
 
-### Step 2: Prepare DataSet see data set
+### Step 2: DataSet
   A table has 3 column(1 random latin text, 2 random integer), without  index
   see at:
   - https://github.com/huongnhdh/db_bench/blob/master/sql/insert.sql
   - https://github.com/huongnhdh/db_bench/blob/master/nosql/data.json
 
-### Step 3: Run some query for measure time:
-  Please see for more detail
-  - https://github.com/huongnhdh/db_bench/blob/master/benchmark.py
+### Step 3: Run some queries for measure time:
+
+  Please see at this link for more detail https://github.com/huongnhdh/db_bench/blob/master/benchmark.py
+  
   - For read:  running 100 times on data-set 1.000.000 rows
   - For write: running 100 times for bulk insert each time are 10.000 rows
 
