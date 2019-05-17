@@ -1,7 +1,7 @@
-avg_write_time(ms/10000rows):50.2953344727
-avg_query_q1_time(ms):1.44819824219
-avg_query_q3_time(ms):2.13912353516
-avg_query_q2_time(ms):1.75036132812
-avg_query_q5_time(ms):306.294599609
-avg_query_q4_time(ms):191.34661377
-avg_query_q6_time(ms):283.810097656
+avg_write_time(ms/10000rows):46.8200927734
+avg_query_q1_time(ms):1.50604248047
+avg_query_q3_time(ms):2.21398193359
+avg_query_q2_time(ms):1.78776123047
+avg_query_q5_time(ms):301.729423828
+avg_query_q4_time(ms):192.414335937
+avg_query_q6_time(ms):293.925852051

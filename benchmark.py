@@ -8,20 +8,24 @@ import pymongo
 
 import psycopg2
 import MySQLdb
-from pymongo import MongoClient, InsertOne
+from pymongo import MongoClient
+from pprint import pprint
+from pymongo.errors import BulkWriteError
+from bson.objectid import ObjectId
 
 from bson import json_util
 from enum import Enum
 
 
-# logger = logging.getLogger(__name__)
-
+logger = logging.getLogger()
+stderrLogger=logging.StreamHandler()
+logger.addHandler(stderrLogger)
 
 class DBMS(Enum):
+    MYSQL = 'mysql'
     MARIADB = 'mariadb'
     MONGODB = 'mongodb'
     POSTGRESQL = 'postgres'
-    MYSQL = 'mysql'
 
 
 class STORE_TYPE(Enum):
@@ -154,6 +158,7 @@ class Benchmark:
             conn.close()
         else:
             db = self._connect_db()
+            db.testing.drop()
 
     def write(self):
         self.truncate()
@@ -163,25 +168,34 @@ class Benchmark:
             self._no_sql_write()
 
     def _no_sql_write(self):
+        print('started write with noSQL...')
         data = []
         with open('nosql/data.json', 'r') as data_insert_file:
             data = json.load(data_insert_file)
             iter = 100
             _write_file_report = os.path.join(
                 self.write_dir,  self.dbms.value + '_write.txt')
-            data = [InsertOne(d)  for d in data]
+            # data = [InsertOne(d)  for d in data]
             with open(_write_file_report, 'wb') as wf:
-                for _ in range(0, iter):
-                    conn = self._connect_db()
-                    coll = conn.testing
-                    bulk = coll.bulk_write(data, bypass_document_validation=False)
-                    # bulk.bulkWrite(data)
-                    # bulk.execute()
+                for _ in range(0, iter + 1):
+                    _data = [da.update({"_id": ObjectId()}) for da in data]
+                    conn = self._connect()
+                    db = conn.benchmark
+                    coll = db.testing
                     t1 = current_mills_time()
-                    # coll.bulkWrite(data)
+
+                    try:
+                        coll.insert_many(data)
+                        # rs = bulk.execute()
+                    except BulkWriteError as bwe:
+                        pprint(bwe.details)
+
                     t2 = current_mills_time()
                     time_used = t2 - t1
+                    # print(rs)
+                    conn.close()
                     wf.write(str(time_used) + '\n')
+        print('end write with noSQL.')
 
     def _sql_write(self):
         with open('sql/insert.sql', 'r') as myfile:
@@ -228,6 +242,7 @@ class Benchmark:
                 conn.close()
 
     def _query_mongodb(self, query_key, filename):
+        print("started query in mongo...")
         iter = 100
         out_put_file = os.path.join(
             self.write_dir,  self.dbms.value + '_' + filename + '.txt')
@@ -236,12 +251,14 @@ class Benchmark:
                 conn = self._connect_db()
                 coll = conn.testing
                 if query_key == 'q1':
+                    print("started q1  in mongo...")
                     t1 = current_mills_time()
                     coll.find().limit(1000)
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
                 if query_key == 'q2':
+                    print("started q2  in mongo...")
                     t1 = current_mills_time()
                     #  "SELECT * FROM testing WHERE int_col > 5000 LIMIT 1000",
                     coll.find({'int_col': {"$gt": 5000}}).limit(1000)
@@ -249,22 +266,72 @@ class Benchmark:
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
                 if query_key == 'q3':
+                    print("started q3  in mongo...")
                     t1 = current_mills_time()
                     # "q3": "SELECT * FROM testing WHERE int_col + int_col2 > 12345 LIMIT 1000",
                     # coll.find({ $where: "/^.*test.*$/.test(this.int_col + this.int_col2)" } )).limit(1000)
-                    coll.find({ "$where": "this.int_col + this.int_col2  > 12345" } ).limit(1000)
+                    coll.find(
+                        {"$where": "this.int_col + this.int_col2  > 12345"}).limit(1000)
+                    coll.aggregate([
+
+                        {
+                            "$addFields": {
+                                "sum": {
+                                    "$sum": [
+                                        "$int_col",
+                                        "$int_col2"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "$match": {
+                                "sum": {
+                                    "$gt": 12345
+                                }
+                            }
+                        },
+
+                        {
+                            "$limit": 1000
+                        }
+                    ])
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
                 if query_key == 'q4':
+                    print("started q4  in mongo...")
                     # "q4": "SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345",
                     t1 = current_mills_time()
-                    coll.find({ "$where": "this.int_col + this.int_col2  > 12345" }).count()
+                    coll.aggregate([
+
+                        {
+                            "$addFields": {
+                                "sum": {
+                                    "$sum": [
+                                        "$int_col",
+                                        "$int_col2"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "$match": {
+                                "sum": {
+                                    "$gt": 123
+                                }
+                            }
+                        },
+
+                        {
+                            "$count": "totalCount"
+                        }
+                    ])
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
                 if query_key == 'q5':
-                    # "q5": "SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000",
+                    print("started q5  in mongo...")
                     t1 = current_mills_time()
                     coll.find({'int_col': {"$gt": bson.int64.Int64(5000)}}).sort(
                         [("word_col", pymongo.ASCENDING)]).limit(1000)
@@ -272,6 +339,7 @@ class Benchmark:
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
                 if query_key == 'q6':
+                    print("started q6 in mongo...")
                     # "q6": "SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000"
                     t1 = current_mills_time()
                     # coll.find({"word_col": {"$regex": u"lim"}}).sort(
@@ -281,6 +349,7 @@ class Benchmark:
                     t2 = current_mills_time()
                     time_used = t2 - t1
                     wf.write(str(time_used) + '\n')
+        print("end query in mongo")
 
     def config(self):
         config_file_locate = os.path.join(
@@ -344,23 +413,22 @@ class Benchmark:
 
 
 def _benchmark(database):
-    # logger.info("started benchmark for {}".format(database))
+    logger.info("started benchmark for {}".format(database))
     print("started benchmark for {}".format(database))
     benchmark_db = database
     dict_connection = CONNECTION_INIT[database.value]
     benchmark = Benchmark(benchmark_db, dict_connection)
-    # benchmark.config()
+    benchmark.config()
     benchmark.write()
     benchmark.read()
     benchmark.summary()
 
 
 if __name__ == "__main__":
-    _benchmark(DBMS.MONGODB)
-    # for database in DBMS:
-    #     _benchmark(database)
-        # try:
-
-        # except Exception as e:
-        #     print("Has error {}".format(e.message))
-        #     # logger.error(  )
+    logger.info("started benchmark for")
+    # _benchmark(DBMS.MONGODB)
+    for database in DBMS:
+        try:
+            _benchmark(database)
+        except Exception as e:
+            logger.error("Has error {}".format(e.message))

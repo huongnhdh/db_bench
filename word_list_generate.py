@@ -29,7 +29,7 @@ def generate_nosql(table='testing', column=['word_col', 'int_col', 'int_col2'], 
     lines = []
     for i in range(rows):
         line ={
-            '_id': i,
+            'id': i,
         }
         for i, c in enumerate(column):
             if col_type[i] == 'varchar':
