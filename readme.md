@@ -26,13 +26,14 @@ The ENV of running script is: Python 2.7 with Ubuntu 18.10 (SSD 128G)
   | Query Type  | query 1 (q1)  | query 2 (q2)  | query 3 (q3)  | query 4(q4) |query 5 (q5) |query 6(q6)|
   |---|---|---|---|---|---|---|---|
   | SQL  | `SELECT * FROM testing LIMIT 1000`  |`SELECT * FROM testing WHERE int_col > 5000 LIMIT 1000`   |`SELECT * FROM testing WHERE int_col + int_col2 > 12345 LIMIT 1000`   |`SELECT COUNT(*) FROM testing WHERE int_col + int_col2 > 12345`   |`SELECT * FROM testing WHERE int_col > 5000 ORDER BY word_col ASC LIMIT 1000`|`SELECT * FROM testing WHERE word_col LIKE '%lim%' ORDER BY word_col DESC LIMIT 1000`|
-  | MongoDB(NoSQL)  | `find().limit(1000) ` | `find({'int_col': {"$gt": 5000}}).limit(1000)`  |`find({"$where": "this.int_col + this.int_col2  > 12345"}).limit(1000)`| `aggregate.([{"$addFields":{"sum":{"$sum":["$int_col","$int_col2"]}}},{"$match":{"sum":{"$gt":12345}}},{"$limit":1000}])` |`find({'int_col': {"$gt": bson.int64.Int64(5000)}}).sort([("word_col", pymongo.ASCENDING)]).limit(1000)`|`.find({"word_col":  "/.*lim.*/"}).sort([("word_col", pymongo.DESCENDING)]).limit(1000)`|
+  | MongoDB(NoSQL)  | `find().limit(1000) ` | `find({'int_col': {"$gt": 5000}}).limit(1000)`  |`aggregate.([{"$addFields":{"sum":{"$sum":["$int_col","$int_col2"]}}},{"$match":{"sum":{"$gt":12345}}},{"$limit": 1000}])`| `aggregate.([{"$addFields":{"sum":{"$sum":["$int_col","$int_col2"]}}},{"$match":{"sum":{"$gt":12345}}},{"$count": "totalCount"}])` |`find({'int_col': {"$gt": bson.int64.Int64(5000)}}).sort([("word_col", pymongo.ASCENDING)]).limit(1000)`|`.find({"word_col":  "/.*lim.*/"}).sort([("word_col", pymongo.DESCENDING)]).limit(1000)`|
 
   - report image below
 
-## 2. The report for basic syntax
+## 2. The report for basic query
 
-![report](./benchmark_mongo_maria_my_post_gre.png)
+![report_mysql_postgresql_mariadb_mongo_db.png](report_mysql_postgresql_mariadb_mongo_db.png)
+
 
 Note: The images below was generate from report
 
@@ -40,10 +41,10 @@ Raw summary result of avg execute 100 times:
 
 |Database management system  |Write batch data | q1 | q2 | q3 |q4 | q5 | q6|
 |---|---|---|---|---|---|---|---|
-|Mariadb-10.3| 46.8200927734| 1.50604248047| 1.78776123047| 1.78776123047| 192.414335937| 301.729423828| 293.925852051|
-|Mongodb-4.0.9| 82.704220007 | 0.0346118164063| 0.0348852539062| 0.0348852539062|1055.94130371| 0.0642456054687| 0.0800732421875|
+|Mariadb-10.3| **`46.8200927734`**| 1.50604248047| 1.78776123047| 1.78776123047| 192.414335937| 301.729423828| 293.925852051|
+|Mongodb-4.0.9| 82.704220007 | **`0.0346118164063`**| **`0.0348852539062`**| **`0.0348852539062`**|1055.94130371| **`0.0642456054687`**| **`0.0800732421875`**|
 |Mysql-8.0| 75.0042041016| 2.2075| 2.18768066406| 2.18768066406| 177.359348145| 631.993063965| 406.15064209|
-|PostpreSQL-11.2| 66.9281835938| 1.25299072266| 1.53550048828| 1.53550048828| 42.7281103516| 62.4191040039| 58.9514770508|
+|PostpreSQL-11.2| 66.9281835938| 1.25299072266| 1.53550048828| 1.73638427734| **`42.7281103516`**| 62.4191040039| 58.9514770508|
 
 
 The raw of result at https://github.com/huongnhdh/db_bench/tree/master/benchmark
@@ -52,8 +53,8 @@ The raw of result at https://github.com/huongnhdh/db_bench/tree/master/benchmark
 - avg write time (batch insert): MariaDB win
 - q1: (`select` with `limit`): MongoDB win
 - q2: (`select` with `where` and `limit`): MongoDB win
-- q3: (`select` with `count`, `where( <, + )`): PostgreSQL win
-- q4: (`select` with `where(>, +)` `order by` and `asc` and `limit`): PostgreSQL win
-- q5: (`select` with `where(> )` `order by` and `asc` and `limit`): PostgreSQL win
+- q3: (`select` with `where(>, +)` and `limit`): MongoDB win
+- q4: (`select` with `count` for `where( <, + )`): PostgreSQL win
+- q5: (`select` with `where(> )` `order by` and `asc` and `limit`): MongoDB win
 - q6: (`select` with `where(like)` `order by` and `asc` and `limit`): MongoDB win
 
