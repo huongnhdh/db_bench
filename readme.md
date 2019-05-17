@@ -12,7 +12,7 @@
 The ENV of running script is: Python 2.7 with Ubuntu 18.10 (SSD 128G)
 
 ### Step 2: Prepare DataSet see data set
-  A table has 3 column(1 random latin text, 2 random integer  )
+  A table has 3 column(1 random latin text, 2 random integer), without  index
   see at:
   - https://github.com/huongnhdh/db_bench/blob/master/sql/insert.sql
   - https://github.com/huongnhdh/db_bench/blob/master/nosql/data.json
@@ -50,9 +50,10 @@ The raw of result at https://github.com/huongnhdh/db_bench/tree/master/benchmark
 
 ## 3. Conclusion.
 - avg write time (batch insert): MariaDB win
-- q1: (`select` with `limit`): same
+- q1: (`select` with `limit`): MongoDB win
 - q2: (`select` with `where` and `limit`): MongoDB win
 - q3: (`select` with `count`, `where( <, + )`): PostgreSQL win
 - q4: (`select` with `where(>, +)` `order by` and `asc` and `limit`): PostgreSQL win
 - q5: (`select` with `where(> )` `order by` and `asc` and `limit`): PostgreSQL win
 - q6: (`select` with `where(like)` `order by` and `asc` and `limit`): MongoDB win
+

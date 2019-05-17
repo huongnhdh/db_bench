@@ -1,6 +1,5 @@
 docker run --name maria_benchmark -e MYSQL_ROOT_PASSWORD=password -p 3307:3306 -d mariadb
-docker run --name mysql_benchmark -e MYSQL_ROOT_PASSWORD=password -p 3308:3306 -d mysql:5.7
+docker run --name mysql_benchmark -e MYSQL_ROOT_PASSWORD=password -p 3302:3306 -d mysql:latest
 docker run --name pg-benchmark -e POSTGRES_PASSWORD=password -d -p 5433:5432 -d postgres
 docker run --name mongo-benchmark -d -p 27018:27017 -d mongo
 
-# docker run --name mysql_benchmark_test -e MYSQL_ROOT_PASSWORD=password -p 3302:3306 -d mysql:latest
