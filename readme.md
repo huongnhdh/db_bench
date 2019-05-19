@@ -1,5 +1,5 @@
 # Compare Database: MySQL, PostgreSQL, Maria DB (MongoDB with do later)
-## 1.How to metric
+## 1.How to benchmark
 ### Step 1: Environment for test: 
 
 see at [docker](https://github.com/huongnhdh/db_bench/blob/master/docker.txt)
